@@ -454,7 +454,143 @@ const setCustomTheme = () => {
 
 ## 示例
 
-详细示例请查看 `src/examples/UsageExamples.md` 文件或访问[在线演示](https://agions.github.io/gantt-chart-component/)。
+详细示例请查看 `src/examples/UsageExamples.md` 文件或访问[在线演示](https://agions.github.io/gantt-flow/)
+
+## 开发与发布指南
+
+### 开发流程
+
+1. 克隆仓库
+
+   ```bash
+   git clone https://github.com/Agions/gantt-flow.git
+   cd gantt-flow
+   ```
+
+2. 安装依赖
+
+   ```bash
+   npm install
+   ```
+
+3. 启动开发服务器
+
+   ```bash
+   npm start
+   ```
+
+4. 构建生产版本
+
+   ```bash
+   npm run build
+   ```
+
+5. 运行测试
+   ```bash
+   npm test
+   ```
+
+### 发布到 npm
+
+1. 确保已登录 npm
+
+   ```bash
+   npm login
+   ```
+
+2. 更新版本号（根据语义化版本规则）
+
+   ```bash
+   # 补丁版本（修复 bug）
+   npm version patch
+
+   # 小版本（新增功能）
+   npm version minor
+
+   # 大版本（不兼容的 API 变更）
+   npm version major
+   ```
+
+3. 更新 CHANGELOG.md
+
+   - 添加新功能、改进和修复的详细描述
+   - 按照 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 格式编写
+
+4. 提交更改
+
+   ```bash
+   git add CHANGELOG.md package.json
+   git commit -m "更新版本号和日志"
+   git push origin main
+   ```
+
+5. 发布到 npm
+   ```bash
+   npm publish
+   ```
+
+### 常见问题与解决方案
+
+#### npm 发布错误：403 Forbidden
+
+**问题描述**：
+
+```
+npm error 403 In most cases, you or one of your dependencies are requesting
+npm error 403 a package version that is forbidden by your security policy, or
+npm error 403 on a server you do not have access to.
+```
+
+**解决方案**：
+
+1. **检查 .npmrc 配置**
+
+   - 确保只有一个有效的 registry 配置
+   - 移除无效的 GitHub Package Registry 配置
+   - 验证 npm token 是否有效
+
+   ```bash
+   # 查看当前配置
+   cat ~/.npmrc
+
+   # 修复配置（只保留必要的 npm 配置）
+   echo 'registry=https://registry.npmjs.org/
+   //registry.npmjs.org/:_authToken=YOUR_VALID_TOKEN' > ~/.npmrc
+   ```
+
+2. **检查包名权限**
+
+   - 确保您是该 npm 包的所有者或具有发布权限
+   - 检查包名是否已被其他用户占用
+
+   ```bash
+   # 检查包是否存在
+   npm view gantt-flow
+   ```
+
+3. **检查 npm 登录状态**
+
+   ```bash
+   npm whoami
+   ```
+
+4. **检查网络连接**
+   - 确保可以访问 npm registry
+   ```bash
+   ping registry.npmjs.org
+   ```
+
+#### 其他常见问题
+
+- **构建失败**：确保 Node.js 版本符合要求（>=14.0.0）
+- **测试失败**：运行单个测试文件以定位问题
+  ```bash
+  npm test src/components/gantt-chart/core/utils.test.ts
+  ```
+- **类型错误**：检查 TypeScript 版本和配置
+  ```bash
+  npx tsc --noEmit
+  ```
 
 ## 浏览器兼容性
 
@@ -470,6 +606,6 @@ MIT
 
 ## 支持与贡献
 
-如果您有问题或建议，请提交 [issue](https://github.com/Agions/gantt-chart-component/issues)。
+如果您有问题或建议，请提交 [issue](https://github.com/Agions/gantt-flow/issues)。
 
-欢迎提交 Pull Request 来改进这个项目。请查看 [CONTRIBUTING.md](https://github.com/Agions/gantt-chart-component/blob/main/CONTRIBUTING.md) 了解如何贡献。
+欢迎提交 Pull Request 来改进这个项目。
