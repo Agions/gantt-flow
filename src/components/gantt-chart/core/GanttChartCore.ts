@@ -3,12 +3,12 @@
  * 甘特图核心类，负责图表渲染、事件处理和数据管理
  * @module GanttChartCore
  */
-import { 
-  GanttChartOptions, 
-  Task, 
+import {
+  GanttChartOptions,
+  Task,
   TaskId,
-  ViewMode, 
-  DragData, 
+  ViewMode,
+  DragData,
   DragType,
   ResizeType,
   VirtualWindow,
@@ -16,18 +16,19 @@ import {
   Dependency,
   Resource
 } from "./types";
-import { 
-  DateUtils, 
-  TaskUtils, 
-  UIUtils, 
-  ExportUtils, 
-  debounce, 
-  throttle 
+import {
+  DateUtils,
+  TaskUtils,
+  UIUtils,
+  ExportUtils,
+  debounce,
+  throttle
 } from "./utils";
 import createStateManager, { StateManager } from './StateManager';
 import createImageExporter, { ImageExporter } from './ImageExporter';
 import createDataExporter, { DataExporter } from './DataExporter';
 import createPrintManager, { PrintManager } from './PrintManager';
+import createTaskManager, { TaskManager } from './TaskManager';
 
 /**
  * 甘特图事件类型
@@ -83,7 +84,7 @@ export class GanttChartCore {
   private _eventListeners: Map<string, Function[]> = new Map();
   /** 状态管理器 */
   private _stateManager: StateManager;
-  
+
   /** 虚拟滚动相关属性 */
   private _virtualScrolling: boolean = false;
   private _visibleTaskCount: number = 50;
@@ -91,12 +92,12 @@ export class GanttChartCore {
   private _visibleTasks: Task[] = [];
   private _scrollTop: number = 0;
   private _containerHeight: number = 0;
-  
+
   /** 监听器和观察者 */
   private _resizeObserver: ResizeObserver | null = null;
   private _mutationObserver: MutationObserver | null = null;
   private _intersectionObserver: IntersectionObserver | null = null;
-  
+
   /** 事件处理函数引用 */
   private readonly _onMouseMove: (e: MouseEvent) => void;
   private readonly _onMouseUp: (e: MouseEvent) => void;
@@ -105,32 +106,35 @@ export class GanttChartCore {
   private readonly _onTaskClick: (e: MouseEvent) => void;
   private readonly _onTaskDoubleClick: (e: MouseEvent) => void;
   private readonly _handleScroll: () => void;
-  
+
   /** 拖拽数据 */
   private _dragData: DragData | null = null;
-  
+
   /** 渲染标志 */
   private _needsRender: boolean = false;
   private _animationFrameId: number | null = null;
-  
+
   /** 主题配置 */
   private _theme: Record<string, string | undefined> = {};
-  
+
   /** 图片导出工具 */
   private imageExporter: ImageExporter;
-  
+
   /** 数据导出工具 */
   private dataExporter: DataExporter;
-  
+
   /** 打印管理器 */
   private printManager: PrintManager;
-  
+
+  /** 任务管理器 */
+  private taskManager: TaskManager;
+
   /** 是否已销毁 */
   private isDestroyed: boolean = false;
-  
+
   /** 缩放级别 */
   private zoomLevel: number = 1;
-  
+
   /**
    * 创建甘特图实例
    * @param {GanttChartOptions} options - 甘特图配置选项
@@ -142,12 +146,12 @@ export class GanttChartCore {
     this._dependencies = options.dependencies || [];
     this._startDate = options.startDate ? DateUtils.parseDate(options.startDate) : new Date();
     this._endDate = options.endDate ? DateUtils.parseDate(options.endDate) : this._calculateEndDate();
-    
+
     // 虚拟滚动设置
     this._virtualScrolling = options.virtualScrolling || false;
     this._visibleTaskCount = options.visibleTaskCount || 50;
     this._bufferSize = options.bufferSize || 10;
-    
+
     // 绑定方法到实例
     this._onMouseMove = this._onMouseMoveHandler.bind(this);
     this._onMouseUp = this._onMouseUpHandler.bind(this);
@@ -155,10 +159,10 @@ export class GanttChartCore {
     this._onResizeEnd = this._onResizeEndHandler.bind(this);
     this._onTaskClick = this._handleTaskClick.bind(this);
     this._onTaskDoubleClick = this._handleTaskDoubleClick.bind(this);
-    
+
     // 性能优化：使用防抖和节流
     this._handleScroll = debounce(this._handleScrollHandler.bind(this), 16);
-    
+
     // 初始化状态管理器
     this._stateManager = createStateManager({
       tasks: this._tasks,
@@ -197,10 +201,19 @@ export class GanttChartCore {
         locale: options.locale || 'zh-CN'
       }
     });
-    
+
     // 初始化主题
     this._initializeTheme();
-    
+
+    // 初始化任务管理器
+    this.taskManager = createTaskManager({
+      autoCalculateDuration: true,
+      autoCalculateProgress: false,
+      checkCircularDependencies: true
+    });
+    this.taskManager.setTasks(this._tasks);
+    this.taskManager.setDependencies(this._dependencies);
+
     // 初始化导出工具
     this.imageExporter = createImageExporter(this._element!);
     this.dataExporter = createDataExporter(
@@ -209,14 +222,14 @@ export class GanttChartCore {
       options.resources || []
     );
     this.printManager = createPrintManager(this._element!);
-    
+
     // 初始化渲染
     this.render(this._element!);
-    
+
     // 添加事件监听器
     this.attachEventListeners();
   }
-  
+
   /**
    * 获取任务列表的只读副本
    * @returns {ReadonlyArray<Task>} 任务列表
@@ -224,7 +237,7 @@ export class GanttChartCore {
   public get tasks(): ReadonlyArray<Task> {
     return [...this._tasks];
   }
-  
+
   /**
    * 获取依赖关系列表的只读副本
    * @returns {ReadonlyArray<Dependency>} 依赖关系列表
@@ -232,7 +245,7 @@ export class GanttChartCore {
   public get dependencies(): ReadonlyArray<Dependency> {
     return [...this._dependencies];
   }
-  
+
   /**
    * 获取当前开始日期
    * @returns {Date} 开始日期
@@ -240,7 +253,7 @@ export class GanttChartCore {
   public get startDate(): Date {
     return new Date(this._startDate);
   }
-  
+
   /**
    * 获取当前结束日期
    * @returns {Date} 结束日期
@@ -248,7 +261,7 @@ export class GanttChartCore {
   public get endDate(): Date {
     return new Date(this._endDate);
   }
-  
+
   /**
    * 获取当前视图模式
    * @returns {ViewMode} 视图模式
@@ -844,9 +857,140 @@ export class GanttChartCore {
   updateTasks(tasks: Task[]): void {
     this._tasks = tasks
     this._endDate = this._calculateEndDate()
+    // 更新任务管理器
+    this.taskManager.setTasks(tasks);
     if (this._element) {
       this.render(this._element)
     }
+  }
+
+  /**
+   * 创建新任务
+   * @param taskData 任务数据
+   * @returns 创建的任务
+   */
+  createTask(taskData: Partial<Task>): Task {
+    const newTask = this.taskManager.createTask(taskData);
+    // 更新内部任务列表
+    this._tasks = this.taskManager.getTasks();
+    this._endDate = this._calculateEndDate();
+    // 重新渲染
+    if (this._element) {
+      this.render(this._element);
+    }
+    return newTask;
+  }
+
+  /**
+   * 更新任务
+   * @param taskId 任务ID
+   * @param updates 更新数据
+   * @returns 更新后的任务
+   */
+  updateTask(taskId: TaskId, updates: Partial<Task>): Task | null {
+    const updatedTask = this.taskManager.updateTask(taskId, updates);
+    if (updatedTask) {
+      // 更新内部任务列表
+      this._tasks = this.taskManager.getTasks();
+      this._endDate = this._calculateEndDate();
+      // 重新渲染
+      if (this._element) {
+        this.render(this._element);
+      }
+    }
+    return updatedTask;
+  }
+
+  /**
+   * 删除任务
+   * @param taskId 任务ID
+   * @returns 是否删除成功
+   */
+  deleteTask(taskId: TaskId): boolean {
+    const success = this.taskManager.deleteTask(taskId);
+    if (success) {
+      // 更新内部任务列表和依赖关系
+      this._tasks = this.taskManager.getTasks();
+      this._dependencies = this.taskManager.getDependencies();
+      this._endDate = this._calculateEndDate();
+      // 重新渲染
+      if (this._element) {
+        this.render(this._element);
+      }
+    }
+    return success;
+  }
+
+  /**
+   * 创建依赖关系
+   * @param fromId 源任务ID
+   * @param toId 目标任务ID
+   * @param type 依赖关系类型
+   * @param lag 延迟天数
+   * @returns 创建的依赖关系
+   */
+  createDependency(fromId: TaskId, toId: TaskId, type: 'finish_to_start' | 'start_to_start' | 'finish_to_finish' | 'start_to_finish' = 'finish_to_start', lag: number = 0): Dependency | null {
+    const dependency = this.taskManager.createDependency(fromId, toId, type, lag);
+    if (dependency) {
+      // 更新内部依赖关系列表
+      this._dependencies = this.taskManager.getDependencies();
+      // 重新渲染
+      if (this._element) {
+        this.render(this._element);
+      }
+    }
+    return dependency;
+  }
+
+  /**
+   * 删除依赖关系
+   * @param fromId 源任务ID
+   * @param toId 目标任务ID
+   * @returns 是否删除成功
+   */
+  deleteDependency(fromId: TaskId, toId: TaskId): boolean {
+    const success = this.taskManager.deleteDependency(fromId, toId);
+    if (success) {
+      // 更新内部依赖关系列表
+      this._dependencies = this.taskManager.getDependencies();
+      // 重新渲染
+      if (this._element) {
+        this.render(this._element);
+      }
+    }
+    return success;
+  }
+
+  /**
+   * 检查循环依赖
+   * @returns 是否存在循环依赖
+   */
+  checkCircularDependencies(): boolean {
+    return this.taskManager.checkCircularDependencies();
+  }
+
+  /**
+   * 获取所有里程碑任务
+   * @returns 里程碑任务列表
+   */
+  getMilestones(): Task[] {
+    return this.taskManager.getMilestones();
+  }
+
+  /**
+   * 获取所有项目任务
+   * @returns 项目任务列表
+   */
+  getProjects(): Task[] {
+    return this.taskManager.getProjects();
+  }
+
+  /**
+   * 获取所有普通任务
+   * @returns 普通任务列表
+   */
+  getRegularTasks(): Task[] {
+    return this.taskManager.getRegularTasks();
   }
 
   /**
@@ -1039,69 +1183,69 @@ export class GanttChartCore {
    */
   scrollToTask(taskId: number | string): void {
     if (!this._element) return
-    
+
     // 找到任务
     const task = this._tasks.find(t => t.id === taskId)
     if (!task) return
-    
+
     // 计算任务在甘特图中的位置
     const taskIndex = this._tasks.indexOf(task)
     if (taskIndex === -1) return
-    
+
     // 计算任务在视图中的位置并滚动
     const rowHeight = this._options.rowHeight || 40
     const scrollTop = taskIndex * rowHeight
-    
+
     this._element.scrollTo({
       top: scrollTop,
       behavior: 'smooth'
     })
-    
+
     // 计算水平位置并滚动
     const taskStart = DateUtils.parseDate(task.start)
     const daysDiff = DateUtils.daysBetween(this._startDate, taskStart)
     const columnWidth = this._options.columnWidth || 40
     const scrollLeft = daysDiff * columnWidth
-    
+
     this._element.scrollTo({
       left: scrollLeft,
       behavior: 'smooth'
     })
   }
-  
+
   /**
    * 滚动到指定日期
    * @param date 目标日期
    */
   scrollToDate(date: Date | string): void {
     if (!this._element) return
-    
+
     const targetDate = typeof date === 'string' ? DateUtils.parseDate(date) : date
-    
+
     // 计算日期在视图中的位置并滚动
     const daysDiff = DateUtils.daysBetween(this._startDate, targetDate)
     const columnWidth = this._options.columnWidth || 40
     const scrollLeft = daysDiff * columnWidth
-    
+
     this._element.scrollTo({
       left: scrollLeft,
       behavior: 'smooth'
     })
   }
-  
+
   /**
    * 设置视图模式
    * @param mode 视图模式
    */
   setViewMode(mode: ViewMode): void {
     if (!this._element) return
-    
+
     // 更新视图模式
     this._options.viewMode = mode
-    
+
     // 重新渲染
     this.render(this._element)
-    
+
     // 触发视图变更回调
     if (this._options.onViewChange) {
       this._options.onViewChange(mode)
@@ -1119,7 +1263,7 @@ export class GanttChartCore {
       return this._tasks
     }
   }
-  
+
   /**
    * 导出为PNG图片
    * @param options 导出选项
@@ -1127,7 +1271,7 @@ export class GanttChartCore {
    */
   async exportAsPNG(options: ExportOptions = {}): Promise<string> {
     if (!this._element) return Promise.reject("甘特图未渲染");
-    
+
     try {
       // 使用utils中的exportToImage工具函数，传递正确的options对象
       const dataUrl = await ExportUtils.exportToImage(this._element, options);
@@ -1137,7 +1281,7 @@ export class GanttChartCore {
       return Promise.reject(error);
     }
   }
-  
+
   /**
    * 导出为PDF文档
    * @param options 导出选项
@@ -1145,7 +1289,7 @@ export class GanttChartCore {
    */
   async exportAsPDF(options: ExportOptions = {}): Promise<Blob> {
     if (!this._element) return Promise.reject("甘特图未渲染");
-    
+
     try {
       // 使用utils中的exportToPDF工具函数，传递正确的options对象
       return await ExportUtils.exportToPDF(this._element, options);
@@ -1164,19 +1308,19 @@ export class GanttChartCore {
   autoSchedule(respectDependencies: boolean = true): Task[] {
     // 创建任务副本以避免修改原始数据
     const scheduledTasks = JSON.parse(JSON.stringify(this._tasks)) as Task[];
-    
+
     if (respectDependencies) {
       // 按依赖关系排序任务（拓扑排序）
       const taskMap = new Map<string | number, Task>();
       const visited = new Set<string | number>();
       const visitedInCurrentPath = new Set<string | number>();
       const sortedTasks: Task[] = [];
-      
+
       // 构建任务映射
       scheduledTasks.forEach(task => {
         taskMap.set(task.id, task);
       });
-      
+
       // 深度优先搜索进行拓扑排序
       const dfs = (taskId: string | number) => {
         if (visitedInCurrentPath.has(taskId)) {
@@ -1184,39 +1328,39 @@ export class GanttChartCore {
           console.warn(`检测到循环依赖，包含任务ID: ${taskId}`);
           return;
         }
-        
+
         if (visited.has(taskId)) {
           return;
         }
-        
+
         visited.add(taskId);
         visitedInCurrentPath.add(taskId);
-        
+
         const task = taskMap.get(taskId);
         if (task && task.dependsOn) {
           task.dependsOn.forEach(depId => {
             dfs(depId);
           });
         }
-        
+
         visitedInCurrentPath.delete(taskId);
         if (task) {
           sortedTasks.push(task);
         }
       };
-      
+
       // 对所有任务执行DFS
       scheduledTasks.forEach(task => {
         if (!visited.has(task.id)) {
           dfs(task.id);
         }
       });
-      
+
       // 根据依赖关系调整任务日期
       sortedTasks.forEach(task => {
         if (task.dependsOn && task.dependsOn.length > 0) {
           let maxEndDate = new Date(0); // 初始化为最早的日期
-          
+
           // 找到所有依赖任务的最晚结束日期
           task.dependsOn.forEach(depId => {
             const dependencyTask = taskMap.get(depId);
@@ -1227,28 +1371,28 @@ export class GanttChartCore {
               }
             }
           });
-          
+
           // 调整当前任务的开始日期为依赖任务的最晚结束日期之后的一天
           if (maxEndDate.getTime() > 0) {
             const startDate = DateUtils.addDays(maxEndDate, 1);
             const taskDuration = DateUtils.daysBetween(DateUtils.parseDate(task.start), DateUtils.parseDate(task.end));
             const endDate = DateUtils.addDays(startDate, taskDuration);
-            
+
             task.start = DateUtils.format(startDate);
             task.end = DateUtils.format(endDate);
           }
         }
       });
     }
-    
+
     // 触发自动排程完成回调
     if (this._options.onAutoScheduleComplete) {
       this._options.onAutoScheduleComplete(scheduledTasks);
     }
-    
+
     // 更新任务并重新渲染
     this.updateTasks(scheduledTasks);
-    
+
     return scheduledTasks;
   }
 
@@ -1258,9 +1402,10 @@ export class GanttChartCore {
    */
   applyTheme(theme: any): void {
     if (!this._element) return;
-    
-    // 默认主题
+
+    // 默认主题 - 支持更多自定义选项
     const defaultTheme = {
+      // 基础颜色
       primary: '#4e85c5',
       secondary: '#13c2c2',
       success: '#52c41a',
@@ -1270,17 +1415,80 @@ export class GanttChartCore {
       textSecondary: '#00000073',
       borderColor: '#d9d9d9',
       backgroundColor: '#ffffff',
+
+      // 字体设置
       fontSize: '14px',
       fontFamily: 'Arial, sans-serif',
+
+      // 任务相关
       taskColor: '#4e85c5',
+      taskBackgroundColor: '#e6f7ff',
+      taskBorderColor: '#91d5ff',
+      taskHoverColor: '#1890ff',
+      taskSelectedColor: '#096dd9',
+      taskProgressColor: '#52c41a',
+      taskProgressBackgroundColor: '#f6ffed',
+
+      // 里程碑相关
       milestoneColor: '#722ed1',
+      milestoneBorderColor: '#d3adf7',
+      milestoneBackgroundColor: '#f9f0ff',
+      milestoneHoverColor: '#531dab',
+
+      // 项目相关
       projectColor: '#fa8c16',
-      dependencyLineColor: '#bfbfbf'
+      projectBorderColor: '#ffd591',
+      projectBackgroundColor: '#fff7e6',
+      projectHoverColor: '#d46b08',
+
+      // 依赖线相关
+      dependencyLineColor: '#bfbfbf',
+      dependencyLineWidth: '2',
+
+      // 今日线相关
+      todayLineColor: '#ff4d4f',
+      todayLineWidth: '2',
+
+      // 网格相关
+      gridLineColor: '#f0f0f0',
+      weekendBackgroundColor: '#fafafa',
+
+      // 边框和阴影
+      borderRadius: '4px',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+
+      // 交互相关
+      cursorMove: 'move',
+      cursorResize: 'ew-resize',
+      cursorPointer: 'pointer',
+
+      // 选择相关
+      selectionColor: '#1890ff',
+      selectionBackgroundColor: 'rgba(24, 144, 255, 0.1)',
+
+      // 拖拽相关
+      dragShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+
+      // 辅助线
+      guideLineColor: '#1890ff',
+      guideLineWidth: '1px',
+      guideLineStyle: 'dashed',
+
+      // 滚动条
+      scrollbarWidth: '8px',
+      scrollbarTrackColor: '#f0f0f0',
+      scrollbarThumbColor: '#c1c1c1',
+      scrollbarThumbHoverColor: '#a8a8a8',
+
+      // 文本样式
+      textTask: '#333',
+      textMilestone: '#333',
+      textProject: '#333'
     };
-    
+
     // 合并用户主题
     const currentTheme = { ...defaultTheme, ...theme };
-    
+
     // 创建样式元素
     let styleEl = document.getElementById('gantt-custom-theme');
     if (!styleEl) {
@@ -1288,38 +1496,187 @@ export class GanttChartCore {
       styleEl.id = 'gantt-custom-theme';
       document.head.appendChild(styleEl);
     }
-    
-    // 应用主题
+
+    // 应用主题 - 支持更细粒度的样式控制
     styleEl.textContent = `
+      /* 容器基础样式 */
       .gantt-container {
         font-family: ${currentTheme.fontFamily};
         font-size: ${currentTheme.fontSize};
         background-color: ${currentTheme.backgroundColor};
         color: ${currentTheme.textPrimary};
+        border-color: ${currentTheme.borderColor};
+        
+        /* CSS变量定义，方便在组件中使用 */
         --gantt-primary-color: ${currentTheme.primary};
         --gantt-secondary-color: ${currentTheme.secondary};
+        --gantt-success-color: ${currentTheme.success};
+        --gantt-warning-color: ${currentTheme.warning};
+        --gantt-error-color: ${currentTheme.error};
+        --gantt-text-primary: ${currentTheme.textPrimary};
+        --gantt-text-secondary: ${currentTheme.textSecondary};
         --gantt-border-color: ${currentTheme.borderColor};
         --gantt-background-color: ${currentTheme.backgroundColor};
-        --gantt-task-color: ${currentTheme.taskColor};
-        --gantt-milestone-color: ${currentTheme.milestoneColor};
-        --gantt-project-color: ${currentTheme.projectColor};
-        --gantt-dependency-line-color: ${currentTheme.dependencyLineColor};
+        --gantt-border-radius: ${currentTheme.borderRadius};
+        --gantt-box-shadow: ${currentTheme.boxShadow};
       }
       
+      /* 任务条样式 */
       .gantt-task-bar {
-        background-color: ${currentTheme.taskColor};
+        background-color: ${currentTheme.taskBackgroundColor};
+        border-color: ${currentTheme.taskBorderColor};
+        border: 1px solid ${currentTheme.taskBorderColor};
+        border-radius: ${currentTheme.borderRadius};
+        box-shadow: ${currentTheme.boxShadow};
+        color: ${currentTheme.textTask};
+        cursor: ${currentTheme.cursorMove};
+        transition: all 0.3s ease;
       }
       
+      /* 任务条悬停样式 */
+      .gantt-task-bar:hover {
+        background-color: ${currentTheme.taskHoverColor};
+        border-color: ${currentTheme.taskHoverColor};
+        transform: translateY(-1px);
+        box-shadow: ${currentTheme.dragShadow};
+      }
+      
+      /* 任务条选中样式 */
+      .gantt-task-bar.selected {
+        background-color: ${currentTheme.selectionBackgroundColor};
+        border-color: ${currentTheme.selectionColor};
+        box-shadow: 0 0 0 2px ${currentTheme.selectionColor};
+      }
+      
+      /* 任务进度条样式 */
+      .gantt-task-progress {
+        background-color: ${currentTheme.taskProgressColor};
+        border-radius: ${currentTheme.borderRadius} 0 0 ${currentTheme.borderRadius};
+        transition: width 0.3s ease;
+      }
+      
+      /* 里程碑样式 */
       .gantt-milestone {
-        background-color: ${currentTheme.milestoneColor};
+        background-color: ${currentTheme.milestoneBackgroundColor};
+        border-color: ${currentTheme.milestoneBorderColor};
+        border: 2px solid ${currentTheme.milestoneBorderColor};
+        border-radius: 50%;
+        color: ${currentTheme.textMilestone};
+        cursor: ${currentTheme.cursorPointer};
+        transition: all 0.3s ease;
       }
       
+      /* 里程碑悬停样式 */
+      .gantt-milestone:hover {
+        background-color: ${currentTheme.milestoneHoverColor};
+        border-color: ${currentTheme.milestoneHoverColor};
+        transform: scale(1.1);
+        box-shadow: ${currentTheme.dragShadow};
+      }
+      
+      /* 项目任务样式 */
       .gantt-task-bar.project {
-        background-color: ${currentTheme.projectColor};
+        background-color: ${currentTheme.projectBackgroundColor};
+        border-color: ${currentTheme.projectBorderColor};
+        border: 2px solid ${currentTheme.projectBorderColor};
+        color: ${currentTheme.textProject};
       }
       
+      /* 项目任务悬停样式 */
+      .gantt-task-bar.project:hover {
+        background-color: ${currentTheme.projectHoverColor};
+        border-color: ${currentTheme.projectHoverColor};
+      }
+      
+      /* 依赖线样式 */
       .gantt-dependency-line {
         stroke: ${currentTheme.dependencyLineColor};
+        stroke-width: ${currentTheme.dependencyLineWidth};
+        transition: stroke 0.3s ease;
+      }
+      
+      /* 依赖线悬停样式 */
+      .gantt-dependency-line:hover {
+        stroke: ${currentTheme.primary};
+        stroke-width: ${parseInt(currentTheme.dependencyLineWidth) + 1}px;
+      }
+      
+      /* 今日线样式 */
+      .gantt-today-line {
+        background-color: ${currentTheme.todayLineColor};
+        width: ${currentTheme.todayLineWidth};
+        opacity: 0.8;
+        transition: all 0.3s ease;
+      }
+      
+      /* 网格线样式 */
+      .gantt-grid-line {
+        border-color: ${currentTheme.gridLineColor};
+      }
+      
+      /* 周末背景样式 */
+      .gantt-weekend {
+        background-color: ${currentTheme.weekendBackgroundColor};
+      }
+      
+      /* 拖拽时的阴影效果 */
+      .gantt-task-bar.dragging {
+        opacity: 0.8;
+        box-shadow: ${currentTheme.dragShadow};
+        z-index: 1000;
+      }
+      
+      /* 辅助线样式 */
+      .gantt-guide-line {
+        background-color: ${currentTheme.guideLineColor};
+        width: ${currentTheme.guideLineWidth};
+        opacity: 0.7;
+        z-index: 999;
+      }
+      
+      /* 调整大小手柄样式 */
+      .gantt-task-resize-handle {
+        cursor: ${currentTheme.cursorResize};
+        transition: all 0.3s ease;
+      }
+      
+      /* 调整大小手柄悬停样式 */
+      .gantt-task-resize-handle:hover {
+        background-color: ${currentTheme.primary};
+        transform: scale(1.2);
+      }
+      
+      /* 任务标签样式 */
+      .gantt-task-label {
+        color: ${currentTheme.textTask};
+        font-size: ${currentTheme.fontSize};
+        font-weight: 400;
+      }
+      
+      /* 滚动条样式 */
+      ::-webkit-scrollbar {
+        width: ${currentTheme.scrollbarWidth};
+        height: ${currentTheme.scrollbarWidth};
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: ${currentTheme.scrollbarTrackColor};
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: ${currentTheme.scrollbarThumbColor};
+        border-radius: 4px;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: ${currentTheme.scrollbarThumbHoverColor};
+      }
+      
+      /* 选中区域样式 */
+      .gantt-selection-area {
+        background-color: ${currentTheme.selectionBackgroundColor};
+        border: 1px dashed ${currentTheme.selectionColor};
+        opacity: 0.5;
       }
     `;
   }
@@ -1419,9 +1776,9 @@ export class GanttChartCore {
     if (!this._eventListeners.has(eventName)) {
       this._eventListeners.set(eventName, []);
     }
-    
+
     this._eventListeners.get(eventName)?.push(callback);
-    
+
     return () => {
       if (this._eventListeners.has(eventName)) {
         this._eventListeners.get(eventName)?.filter(cb => cb !== callback);
@@ -1454,16 +1811,19 @@ export class GanttChartCore {
    */
   public destroy(): void {
     if (this.isDestroyed) return;
-    
+
     // 移除所有事件监听器
     this._eventListeners.clear();
-    
+
     // 清空容器
     if (this._element) {
       this._element.innerHTML = '';
     }
-    
+
     // 标记为已销毁
     this.isDestroyed = true;
   }
 }
+
+// 添加默认导出，支持Vue组件的默认导入
+export default GanttChartCore;

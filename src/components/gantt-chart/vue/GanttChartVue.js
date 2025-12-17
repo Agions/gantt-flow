@@ -47,6 +47,52 @@ const GanttChartVue = defineComponent({
     headerHeight: {
       type: Number,
       default: 50
+    },
+    // 新增配置选项
+    allowTaskDrag: {
+      type: Boolean,
+      default: true
+    },
+    allowTaskResize: {
+      type: Boolean,
+      default: true
+    },
+    enableDependencies: {
+      type: Boolean,
+      default: true
+    },
+    showProgress: {
+      type: Boolean,
+      default: true
+    },
+    showWeekends: {
+      type: Boolean,
+      default: true
+    },
+    showToday: {
+      type: Boolean,
+      default: true
+    },
+    readOnly: {
+      type: Boolean,
+      default: false
+    },
+    theme: {
+      type: Object,
+      default: () => ({})
+    },
+    // 虚拟滚动配置
+    virtualScrolling: {
+      type: Boolean,
+      default: false
+    },
+    visibleTaskCount: {
+      type: Number,
+      default: 50
+    },
+    bufferSize: {
+      type: Number,
+      default: 10
     }
   },
   emits: [
@@ -56,9 +102,13 @@ const GanttChartVue = defineComponent({
     'dateChange',
     'progressChange',
     'viewChange',
-    'taskToggle'
+    'taskToggle',
+    'dependenciesChange',
+    'tasksChange',
+    'scroll',
+    'render'
   ],
-  setup(props, { emit }) {
+  setup(props, { emit, expose }) {
     const ganttContainer = ref(null);
     const ganttChart = ref(null);
     
@@ -79,6 +129,17 @@ const GanttChartVue = defineComponent({
       columnWidth: props.columnWidth,
       rowHeight: props.rowHeight,
       headerHeight: props.headerHeight,
+      allowTaskDrag: props.allowTaskDrag,
+      allowTaskResize: props.allowTaskResize,
+      enableDependencies: props.enableDependencies,
+      showProgress: props.showProgress,
+      showWeekends: props.showWeekends,
+      showToday: props.showToday,
+      readOnly: props.readOnly,
+      theme: props.theme,
+      virtualScrolling: props.virtualScrolling,
+      visibleTaskCount: props.visibleTaskCount,
+      bufferSize: props.bufferSize,
       onTaskClick: (task, event) => {
         emit('taskClick', task, event);
       },
@@ -87,6 +148,27 @@ const GanttChartVue = defineComponent({
       },
       onTaskDoubleClick: (task, event) => {
         emit('taskDoubleClick', task, event);
+      },
+      onDateChange: (startDate, endDate) => {
+        emit('dateChange', startDate, endDate);
+      },
+      onProgressChange: (task, progress) => {
+        emit('progressChange', task, progress);
+      },
+      onViewChange: (viewMode) => {
+        emit('viewChange', viewMode);
+      },
+      onDependenciesChange: (dependencies) => {
+        emit('dependenciesChange', dependencies);
+      },
+      onTasksChange: (tasks) => {
+        emit('tasksChange', tasks);
+      },
+      onScroll: (scrollPosition) => {
+        emit('scroll', scrollPosition);
+      },
+      onRender: () => {
+        emit('render');
       }
     });
     
@@ -106,7 +188,18 @@ const GanttChartVue = defineComponent({
         props.dependencies,
         props.viewMode,
         props.columnWidth,
-        props.rowHeight
+        props.rowHeight,
+        props.allowTaskDrag,
+        props.allowTaskResize,
+        props.enableDependencies,
+        props.showProgress,
+        props.showWeekends,
+        props.showToday,
+        props.readOnly,
+        props.theme,
+        props.virtualScrolling,
+        props.visibleTaskCount,
+        props.bufferSize
       ],
       () => {
         if (ganttChart.value) {
@@ -118,8 +211,81 @@ const GanttChartVue = defineComponent({
     
     // 组件销毁时清理
     onUnmounted(() => {
+      if (ganttChart.value) {
+        ganttChart.value.destroy();
+      }
       if (ganttContainer.value) {
         ganttContainer.value.innerHTML = '';
+      }
+    });
+    
+    // 暴露公共方法
+    expose({
+      // 设置视图模式
+      setViewMode: (mode) => {
+        if (ganttChart.value) {
+          ganttChart.value.setViewMode(mode);
+        }
+      },
+      // 滚动到指定任务
+      scrollToTask: (taskId) => {
+        if (ganttChart.value) {
+          ganttChart.value.scrollToTask(taskId);
+        }
+      },
+      // 滚动到指定日期
+      scrollToDate: (date) => {
+        if (ganttChart.value) {
+          ganttChart.value.scrollToDate(date);
+        }
+      },
+      // 导出为PNG
+      exportAsPNG: (options) => {
+        if (ganttChart.value) {
+          return ganttChart.value.exportAsPNG(options);
+        }
+        return Promise.reject('甘特图未初始化');
+      },
+      // 导出为PDF
+      exportAsPDF: (options) => {
+        if (ganttChart.value) {
+          return ganttChart.value.exportAsPDF(options);
+        }
+        return Promise.reject('甘特图未初始化');
+      },
+      // 自动排程
+      autoSchedule: (respectDependencies = true) => {
+        if (ganttChart.value) {
+          return ganttChart.value.autoSchedule(respectDependencies);
+        }
+        return [];
+      },
+      // 应用主题
+      applyTheme: (theme) => {
+        if (ganttChart.value) {
+          ganttChart.value.applyTheme(theme);
+        }
+      },
+      // 获取可见任务
+      getVisibleTasks: () => {
+        if (ganttChart.value) {
+          return ganttChart.value.getVisibleTasks();
+        }
+        return [];
+      },
+      // 撤销操作
+      undo: () => {
+        if (ganttChart.value) {
+          return ganttChart.value.undo();
+        }
+        return false;
+      },
+      // 重做操作
+      redo: () => {
+        if (ganttChart.value) {
+          return ganttChart.value.redo();
+        }
+        return false;
       }
     });
     

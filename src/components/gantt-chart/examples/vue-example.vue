@@ -5,8 +5,7 @@
     <div class="toolbar">
       <div class="view-modes">
         <button 
-          v-for="mode in viewModes" 
-          :key="mode.value"
+          v-for="mode in viewModes"  :key="mode.value"
           :class="{ active: currentViewMode === mode.value }"
           @click="setViewMode(mode.value)"
         >

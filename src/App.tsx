@@ -578,7 +578,7 @@ function App() {
           <Link to="/demo">演示</Link>
           <a 
             className="github-button" 
-            href="https://github.com/Agions/gantt-chart-component" 
+            href="https://github.com/Agions/gantt-flow" 
           target="_blank" 
           rel="noopener noreferrer"
         >
@@ -897,7 +897,7 @@ function App() {
               <li><Link to="/features">功能特点</Link></li>
               <li><Link to="/demo">在线演示</Link></li>
               <li><a href="#docs">使用文档</a></li>
-              <li><a href="https://github.com/Agions/gantt-chart-component" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+              <li><a href="https://github.com/Agions/gantt-flow" target="_blank" rel="noopener noreferrer">GitHub</a></li>
             </ul>
           </div>
           <div className="footer-section">

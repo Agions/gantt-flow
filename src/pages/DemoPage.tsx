@@ -3,78 +3,49 @@ import { Task, Dependency, DependencyType } from '../components/gantt-chart/core
 import { EnhancedGanttChart } from '../components/gantt-chart/enhanced/EnhancedGanttChart';
 import '../components/gantt-chart/styles/EnhancedGanttChart.css';
 
-// 示例任务数据
-const sampleTasks: Task[] = [
-  {
-    id: 1,
-    name: '项目启动',
-    start: new Date(2023, 0, 1),
-    end: new Date(2023, 0, 5),
-    progress: 100,
-    type: 'milestone',
-    dependencies: []
-  },
-  {
-    id: 2,
-    name: '需求分析',
-    start: new Date(2023, 0, 6),
-    end: new Date(2023, 0, 15),
-    progress: 100,
-    dependencies: [1]
-  },
-  {
-    id: 3,
-    name: '系统设计',
-    start: new Date(2023, 0, 16),
-    end: new Date(2023, 0, 31),
-    progress: 80,
-    dependencies: [2]
-  },
-  {
-    id: 4,
-    name: '前端开发',
-    start: new Date(2023, 1, 1),
-    end: new Date(2023, 1, 28),
-    progress: 60,
-    dependencies: [3]
-  },
-  {
-    id: 5,
-    name: '后端开发',
-    start: new Date(2023, 1, 1),
-    end: new Date(2023, 2, 15),
-    progress: 50,
-    dependencies: [3]
-  },
-  {
-    id: 6,
-    name: '测试',
-    start: new Date(2023, 2, 16),
-    end: new Date(2023, 3, 15),
-    progress: 30,
-    dependencies: [4, 5]
-  },
-  {
-    id: 7,
-    name: '部署上线',
-    start: new Date(2023, 3, 16),
-    end: new Date(2023, 3, 20),
-    progress: 0,
-    type: 'milestone',
-    dependencies: [6]
+// 生成大量测试任务数据
+const generateTestTasks = (count: number): Task[] => {
+  const tasks: Task[] = [];
+  
+  // 生成1000个任务
+  for (let i = 1; i <= count; i++) {
+    const startDate = new Date(2023, 0, i * 2);
+    const endDate = new Date(2023, 0, i * 2 + Math.floor(Math.random() * 10) + 5);
+    
+    tasks.push({
+      id: i,
+      name: `任务 ${i}`,
+      start: startDate,
+      end: endDate,
+      progress: Math.floor(Math.random() * 100),
+      type: i % 10 === 0 ? 'milestone' : 'task',
+      dependencies: i > 1 ? [i - 1] : []
+    });
   }
-];
+  
+  return tasks;
+};
 
-// 示例依赖数据
-const sampleDependencies: Dependency[] = [
-  { fromId: 1, toId: 2, type: 'finish-to-start' as unknown as DependencyType },
-  { fromId: 2, toId: 3, type: 'finish-to-start' as unknown as DependencyType },
-  { fromId: 3, toId: 4, type: 'finish-to-start' as unknown as DependencyType },
-  { fromId: 3, toId: 5, type: 'finish-to-start' as unknown as DependencyType },
-  { fromId: 4, toId: 6, type: 'finish-to-start' as unknown as DependencyType },
-  { fromId: 5, toId: 6, type: 'finish-to-start' as unknown as DependencyType },
-  { fromId: 6, toId: 7, type: 'finish-to-start' as unknown as DependencyType }
-];
+// 生成测试依赖数据
+const generateTestDependencies = (count: number): Dependency[] => {
+  const dependencies: Dependency[] = [];
+  
+  for (let i = 1; i < count; i++) {
+    dependencies.push({
+      fromId: i,
+      toId: i + 1,
+      type: 'finish-to-start' as unknown as DependencyType
+    });
+  }
+  
+  return dependencies;
+};
+
+// 示例任务数据 - 生成1000个测试任务
+const sampleTasks: Task[] = generateTestTasks(1000);
+
+// 示例依赖数据 - 生成对应依赖关系
+const sampleDependencies: Dependency[] = generateTestDependencies(1000);
 
 // 甘特图配置
 const ganttOptions = {

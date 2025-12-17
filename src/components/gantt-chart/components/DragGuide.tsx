@@ -1,5 +1,15 @@
 import React from 'react';
-import { ThemeConfig } from '../themes';
+
+interface ThemeConfig {
+  primary: string;
+  secondary: string;
+  success: string;
+  warning: string;
+  error: string;
+  taskBackground: string;
+  taskBorder: string;
+  [key: string]: string;
+}
 
 interface DragGuideProps {
   theme: ThemeConfig;
@@ -70,10 +80,10 @@ export const DragGuide: React.FC<DragGuideProps> = ({
             top: line.start,
             height: line.end,
             width: '1px',
-            backgroundColor: theme.colors.primary,
+            backgroundColor: theme.primary,
             opacity: 0.5,
-            boxShadow: `0 0 2px ${theme.colors.primary}`,
-            transition: `opacity ${theme.animation.duration} ${theme.animation.easing}`
+            boxShadow: `0 0 2px ${theme.primary}`,
+            transition: 'opacity 0.3s ease'
           }}
         />
       ))}
@@ -88,10 +98,10 @@ export const DragGuide: React.FC<DragGuideProps> = ({
             left: line.start,
             width: line.end,
             height: '1px',
-            backgroundColor: theme.colors.primary,
+            backgroundColor: theme.primary,
             opacity: 0.5,
-            boxShadow: `0 0 2px ${theme.colors.primary}`,
-            transition: `opacity ${theme.animation.duration} ${theme.animation.easing}`
+            boxShadow: `0 0 2px ${theme.primary}`,
+            transition: 'opacity 0.3s ease'
           }}
         />
       ))}
@@ -103,14 +113,14 @@ export const DragGuide: React.FC<DragGuideProps> = ({
             position: 'absolute',
             left: findNearestSnapPoint(currentPosition.x, snapPoints.x),
             top: findNearestSnapPoint(currentPosition.y, snapPoints.y),
-            width: theme.spacing.unit,
-            height: theme.spacing.unit,
-            backgroundColor: theme.colors.primary,
+            width: 10,
+            height: 10,
+            backgroundColor: theme.primary,
             borderRadius: '50%',
             transform: 'translate(-50%, -50%)',
-            boxShadow: theme.shadows.small,
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
             opacity: 0.8,
-            transition: `all ${theme.animation.duration} ${theme.animation.easing}`
+            transition: 'all 0.3s ease'
           }}
         />
       )}

@@ -268,6 +268,12 @@ export class StateManager {
    * @private
    */
   private _updateTaskCache(): void {
+    // 检查是否需要更新任务缓存
+    const shouldUpdate = this._shouldUpdateTaskCache();
+    if (!shouldUpdate) {
+      return;
+    }
+    
     // 创建基础任务缓存
     this._state.tasks.forEach(task => {
       const taskDuration = this._calculateTaskDuration(task);
@@ -290,11 +296,11 @@ export class StateManager {
       if (fromTask && toTask) {
         // 确保不重复添加
         if (!fromTask.dependencies.includes(toTask.id)) {
-        fromTask.dependencies.push(toTask.id);
+          fromTask.dependencies.push(toTask.id);
         }
         
         if (!toTask.dependents.includes(fromTask.id)) {
-        toTask.dependents.push(fromTask.id);
+          toTask.dependents.push(fromTask.id);
         }
       }
     });
@@ -304,6 +310,31 @@ export class StateManager {
     
     // 更新任务可见性（根据折叠状态）
     this._updateTaskVisibility();
+  }
+  
+  /**
+   * 检查是否需要更新任务缓存
+   * @private
+   */
+  private _shouldUpdateTaskCache(): boolean {
+    // 如果缓存为空，需要更新
+    if (this._taskCache.size === 0) {
+      return true;
+    }
+    
+    // 检查任务数量是否变化
+    if (this._taskCache.size !== this._state.tasks.length) {
+      return true;
+    }
+    
+    // 检查任务ID是否一致
+    for (const task of this._state.tasks) {
+      if (!this._taskCache.has(task.id)) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   /**
@@ -372,12 +403,44 @@ export class StateManager {
    * @private
    */
   private _updateDependencyCache(): void {
+    // 检查是否需要更新依赖缓存
+    const shouldUpdate = this._shouldUpdateDependencyCache();
+    if (!shouldUpdate) {
+      return;
+    }
+    
     this._dependencyCache.clear();
     
     this._state.dependencies.forEach(dep => {
       const key = `${dep.fromId}-${dep.toId}`;
       this._dependencyCache.set(key, { ...dep });
     });
+  }
+  
+  /**
+   * 检查是否需要更新依赖缓存
+   * @private
+   */
+  private _shouldUpdateDependencyCache(): boolean {
+    // 如果缓存为空，需要更新
+    if (this._dependencyCache.size === 0) {
+      return true;
+    }
+    
+    // 检查依赖数量是否变化
+    if (this._dependencyCache.size !== this._state.dependencies.length) {
+      return true;
+    }
+    
+    // 检查依赖关系是否一致
+    for (const dep of this._state.dependencies) {
+      const key = `${dep.fromId}-${dep.toId}`;
+      if (!this._dependencyCache.has(key)) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 
   /**
@@ -475,6 +538,40 @@ export class StateManager {
     // 限制历史记录大小
     if (this._history.length > this._maxHistorySize) {
       this._history.shift();
+    }
+  }
+  
+  /**
+   * 批量更新任务
+   * @param {Task[]} tasks - 要更新的任务列表
+   */
+  public batchUpdateTasks(tasks: Task[]): void {
+    this.beginBatchUpdate();
+    
+    try {
+      // 批量更新任务
+      tasks.forEach(task => {
+        const taskIndex = this._state.tasks.findIndex(t => t.id === task.id);
+        
+        if (taskIndex !== -1) {
+          this.dispatch({
+            type: ActionType.UPDATE_TASK,
+            payload: {
+              taskId: task.id,
+              updates: task
+            }
+          });
+        } else {
+          this.dispatch({
+            type: ActionType.ADD_TASK,
+            payload: task
+          });
+        }
+      });
+      
+      this.commitBatchUpdate();
+    } catch (error) {
+      console.error('批量更新任务失败:', error);
     }
   }
 

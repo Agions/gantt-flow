@@ -1,7 +1,7 @@
 {
-  "name": "gantt-chart-component",
+  "name": "gantt-flow",
   "version": "1.1.2",
-  "description": "一个功能强大、同时支持React和Vue的甘特图组件，可用于项目管理和任务进度展示",
+  "description": "GanttFlow - 一个功能强大、流畅的甘特图组件，同时支持React和Vue，可用于项目管理和任务进度展示",
   "main": "dist/react/index.js",
   "module": "dist/react/index.esm.js",
   "types": "dist/react/index.d.ts",
@@ -60,15 +60,16 @@
     "gantt",
     "gantt-chart-react",
     "gantt-chart-vue",
-    "gantt-chart-component",
+    "gantt-flow",
     "typescript",
-    "project-management"
+    "project-management",
+    "cross-framework"
   ],
   "author": "agions",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Agions/gantt-chart-component.git"
+    "url": "git+https://github.com/Agions/gantt-flow.git"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
@@ -91,9 +92,11 @@
     "@rollup/plugin-node-resolve": "^15.1.0",
     "@rollup/plugin-terser": "^0.4.3",
     "@rollup/plugin-typescript": "^11.1.2",
+    "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.16",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
+    "@types/xlsx": "^0.0.35",
     "@vue/compiler-sfc": "^3.3.4",
     "ajv": "^8.17.1",
     "ajv-keywords": "^5.1.0",
@@ -116,11 +119,14 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.22.6",
+    "html-to-image": "^1.11.11",
     "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.2",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
     "react-router-dom": "^7.3.0",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "xlsx": "^0.18.5"
   },
   "eslintConfig": {
     "extends": [
@@ -128,5 +134,5 @@
       "react-app/jest"
     ]
   },
-  "homepage": "https://agions.github.io/gantt-chart-component"
+  "homepage": "https://agions.github.io/gantt-flow"
 }

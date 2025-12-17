@@ -83,30 +83,26 @@ export class ImageExporter {
    * @returns Promise<void> 导出完成的Promise
    */
   public async exportAsPDF(options: ExportOptions = {}): Promise<void> {
-    // 注意：这里需要依赖一个PDF生成库，例如jsPDF
-    // 为了保持代码简洁，这里只提供一个基础实现
-    // 实际使用时，建议引入jsPDF或其他PDF库来实现完整功能
     const mergedOptions = { ...this.defaultOptions, ...options };
     const canvas = await this.createCanvas(mergedOptions);
     
-    // 这里只是一个基础实现，实际使用时需要替换成具体的PDF生成代码
-    console.warn('PDF导出功能需要额外安装jsPDF库，当前只下载为PNG');
-    this.downloadImage(canvas, `${mergedOptions.fileName}.png`, 'image/png');
-    
-    // 使用jsPDF的示例代码（需要先安装jsPDF库）:
-    /*
-    import { jsPDF } from 'jspdf';
-    
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-      unit: 'px',
-      format: [canvas.width, canvas.height]
-    });
-    
-    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-    pdf.save(`${mergedOptions.fileName}.pdf`);
-    */
+    try {
+      // 尝试使用动态导入加载jsPDF
+      const { jsPDF } = await import('jspdf');
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`${mergedOptions.fileName}.pdf`);
+    } catch (error) {
+      console.warn('使用jsPDF导出PDF失败，将使用浏览器打印功能');
+      this.exportAsPNG(options);
+    }
   }
 
   /**

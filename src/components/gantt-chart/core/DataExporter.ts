@@ -103,9 +103,9 @@ export class DataExporter {
    * 导出数据
    * @param format 导出格式
    * @param options 导出选项
-   * @returns void
+   * @returns Promise<void>
    */
-  public export(format: ExportFormat, options: ExportOptions = {}): void {
+  public async export(format: ExportFormat, options: ExportOptions = {}): Promise<void> {
     const mergedOptions = { ...this.defaultOptions, ...options };
     
     switch (format) {
@@ -116,7 +116,7 @@ export class DataExporter {
         this.exportAsJSON(mergedOptions);
         break;
       case ExportFormat.EXCEL:
-        this.exportAsExcel(mergedOptions);
+        await this.exportAsExcel(mergedOptions);
         break;
       default:
         console.error(`不支持的导出格式: ${format}`);
@@ -182,35 +182,40 @@ export class DataExporter {
    * 导出为Excel
    * @param options 导出选项
    */
-  private exportAsExcel(options: ExportOptions): void {
-    // 这里需要引入Excel生成库，例如xlsx或exceljs
-    // 为了保持代码简洁，这里仅提供一个基础实现
-    console.warn('Excel导出功能需要额外安装xlsx或exceljs库，当前将数据导出为CSV。');
-    this.exportAsCSV(options);
-    
-    // 使用xlsx库的示例代码：
-    /*
-    import * as XLSX from 'xlsx';
-    
-    const workbook = XLSX.utils.book_new();
-    
-    if (options.exportTasks && this.tasks.length > 0) {
-      const tasksSheet = XLSX.utils.json_to_sheet(this.tasks);
-      XLSX.utils.book_append_sheet(workbook, tasksSheet, '任务');
+  private async exportAsExcel(options: ExportOptions): Promise<void> {
+    try {
+      // 尝试使用动态导入加载xlsx库
+      const XLSX = await import('xlsx');
+      
+      // 使用类型断言解决类型不匹配问题
+      const utils = XLSX.utils as any;
+      
+      const workbook = utils.book_new();
+      
+      // 导出任务
+      if (options.exportTasks && this.tasks.length > 0) {
+        const tasksSheet = utils.json_to_sheet(this.tasks);
+        utils.book_append_sheet(workbook, tasksSheet, '任务');
+      }
+      
+      // 导出依赖关系
+      if (options.exportDependencies && this.dependencies.length > 0) {
+        const dependenciesSheet = utils.json_to_sheet(this.dependencies);
+        utils.book_append_sheet(workbook, dependenciesSheet, '依赖关系');
+      }
+      
+      // 导出资源
+      if (options.exportResources && this.resources.length > 0) {
+        const resourcesSheet = utils.json_to_sheet(this.resources);
+        utils.book_append_sheet(workbook, resourcesSheet, '资源');
+      }
+      
+      // 保存Excel文件
+      XLSX.writeFile(workbook, `${options.fileName}.xlsx`);
+    } catch (error) {
+      console.warn('使用xlsx库导出Excel失败，将数据导出为CSV。');
+      this.exportAsCSV(options);
     }
-    
-    if (options.exportDependencies && this.dependencies.length > 0) {
-      const dependenciesSheet = XLSX.utils.json_to_sheet(this.dependencies);
-      XLSX.utils.book_append_sheet(workbook, dependenciesSheet, '依赖关系');
-    }
-    
-    if (options.exportResources && this.resources.length > 0) {
-      const resourcesSheet = XLSX.utils.json_to_sheet(this.resources);
-      XLSX.utils.book_append_sheet(workbook, resourcesSheet, '资源');
-    }
-    
-    XLSX.writeFile(workbook, `${options.fileName}.xlsx`);
-    */
   }
 
   /**
