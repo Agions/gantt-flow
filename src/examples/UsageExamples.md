@@ -1,13 +1,13 @@
-# 甘特图组件 (gantt-flow) 使用示例
+# 甘特图组件 (@agions/gantt-flow) 使用示例
 
-本文档展示了如何在 Vue 和 React 框架中使用 `gantt-flow` 甘特图组件，以及如何使用新增的特性和功能。
+本文档展示了如何在 Vue 和 React 框架中使用 `@agions/gantt-flow` 甘特图组件，以及如何使用新增的特性和功能。
 
 ## 基本信息
 
-组件名称: `gantt-flow`  
+组件名称: `@agions/gantt-flow`  
 版本: 1.1.2  
 兼容框架: React、Vue  
-npm 包地址: [https://www.npmjs.com/package/gantt-flow](https://www.npmjs.com/package/gantt-flow)
+npm 包地址: [https://www.npmjs.com/package/@agions/gantt-flow](https://www.npmjs.com/package/@agions/gantt-flow)
 
 ## React 使用示例
 
@@ -15,8 +15,8 @@ npm 包地址: [https://www.npmjs.com/package/gantt-flow](https://www.npmjs.com/
 
 ```jsx
 import React, { useRef } from "react"
-import { EnhancedGanttChart } from "gantt-flow"
-import "gantt-flow/style"
+import { EnhancedGanttChart } from "@agions/gantt-flow"
+import "@agions/gantt-flow/style"
 
 function BasicGanttChart() {
   const ganttRef = useRef(null)
@@ -79,8 +79,8 @@ function BasicGanttChart() {
 
 ```jsx
 import React, { useRef, useState } from "react"
-import { EnhancedGanttChart } from "gantt-flow"
-import "gantt-flow/style"
+import { EnhancedGanttChart } from "@agions/gantt-flow"
+import "@agions/gantt-flow/style"
 
 function ThemedGanttChart() {
   const ganttRef = useRef(null)
@@ -169,8 +169,8 @@ function ThemedGanttChart() {
 
 ```jsx
 import React, { useRef } from "react"
-import { EnhancedGanttChart } from "gantt-flow"
-import "gantt-flow/style"
+import { EnhancedGanttChart } from "@agions/gantt-flow"
+import "@agions/gantt-flow/style"
 
 function AdvancedGanttChart() {
   const ganttRef = useRef(null)
@@ -217,8 +217,8 @@ function AdvancedGanttChart() {
 
 ```jsx
 import React, { useRef, useState, useEffect } from "react"
-import { EnhancedGanttChart } from "gantt-flow"
-import "gantt-flow/style"
+import { EnhancedGanttChart } from "@agions/gantt-flow"
+import "@agions/gantt-flow/style"
 
 function CompleteGanttChart() {
   const ganttRef = useRef(null)
@@ -324,8 +324,8 @@ function CompleteGanttChart() {
 
 <script setup>
 import { ref } from "vue"
-import { GanttChart } from "gantt-flow/vue"
-import "gantt-flow/style"
+import { GanttChart } from "@agions/gantt-flow/vue"
+import "@agions/gantt-flow/style"
 
 const ganttChart = ref(null)
 
@@ -397,8 +397,8 @@ const handleTaskClick = (task) => {
 
 <script setup>
 import { ref } from "vue"
-import { GanttChart } from "gantt-flow/vue"
-import "gantt-flow/style"
+import { GanttChart } from "@agions/gantt-flow/vue"
+import "@agions/gantt-flow/style"
 
 const ganttChart = ref(null)
 const currentTheme = ref("light")
@@ -484,8 +484,8 @@ const toggleTheme = () => {
 
 <script setup>
 import { ref } from "vue"
-import { GanttChart } from "gantt-flow/vue"
-import "gantt-flow/style"
+import { GanttChart } from "@agions/gantt-flow/vue"
+import "@agions/gantt-flow/style"
 
 const ganttChart = ref(null)
 const tasks = ref([
@@ -555,8 +555,8 @@ const options = ref({
 
 <script setup>
 import { ref, onMounted } from "vue"
-import { GanttChart } from "gantt-flow/vue"
-import "gantt-flow/style"
+import { GanttChart } from "@agions/gantt-flow/vue"
+import "@agions/gantt-flow/style"
 
 const ganttChart = ref(null)
 const tasks = ref([])
@@ -729,8 +729,8 @@ const exportPDF = () => ganttChart.value.exportAsPDF()
 ```jsx
 // React 与 REST API 集成
 import React, { useEffect, useState, useRef } from "react"
-import { EnhancedGanttChart } from "gantt-flow"
-import "gantt-flow/style"
+import { EnhancedGanttChart } from "@agions/gantt-flow"
+import "@agions/gantt-flow/style"
 
 function GanttWithAPI() {
   const ganttRef = useRef(null)
@@ -834,8 +834,8 @@ function GanttWithAPI() {
 包含完整的 TypeScript 类型定义，可直接导入：
 
 ```typescript
-import { EnhancedGanttChart, Task, Dependency } from "gantt-flow"
-import type { GanttOptions, ViewMode } from "gantt-flow"
+import { EnhancedGanttChart, Task, Dependency } from "@agions/gantt-flow"
+import type { GanttOptions, ViewMode } from "@agions/gantt-flow"
 
 const tasks: Task[] = [
   {
@@ -858,11 +858,11 @@ const tasks: Task[] = [
 "use client"
 
 import dynamic from "next/dynamic"
-import "gantt-flow/style"
+import "@agions/gantt-flow/style"
 
 // 使用动态导入避免 SSR 问题
 const GanttChart = dynamic(
-  () => import("gantt-flow").then((mod) => mod.EnhancedGanttChart),
+  () => import("@agions/gantt-flow").then((mod) => mod.EnhancedGanttChart),
   { ssr: false }
 )
 

@@ -2,9 +2,9 @@
 
 GanttFlow 是一个功能强大、高性能的甘特图组件，支持任务管理、依赖关系、多种视图模式和丰富的交互功能，同时支持 React 和 Vue。
 
-![版本](https://img.shields.io/npm/v/gantt-flow.svg)
-![下载量](https://img.shields.io/npm/dm/gantt-flow.svg)
-![许可证](https://img.shields.io/npm/l/gantt-flow.svg)
+![版本](https://img.shields.io/npm/v/@agions/gantt-flow.svg)
+![下载量](https://img.shields.io/npm/dm/@agions/gantt-flow.svg)
+![许可证](https://img.shields.io/npm/l/@agions/gantt-flow.svg)
 
 ## 特性
 
@@ -31,21 +31,21 @@ GanttFlow 是一个功能强大、高性能的甘特图组件，支持任务管�
 
 ```bash
 # npm
-npm install gantt-flow
+npm install @agions/gantt-flow
 
 # yarn
-yarn add gantt-flow
+yarn add @agions/gantt-flow
 
 # pnpm
-pnpm add gantt-flow
+pnpm add @agions/gantt-flow
 ```
 
 ### React 使用
 
 ```jsx
 import React, { useRef } from "react"
-import { EnhancedGanttChart } from "gantt-flow"
-import "gantt-flow/style"
+import { EnhancedGanttChart } from "@agions/gantt-flow"
+import "@agions/gantt-flow/style"
 
 function App() {
   const ganttRef = useRef(null)
@@ -144,8 +144,8 @@ function App() {
 
 <script setup>
 import { ref } from "vue"
-import { GanttChart } from "gantt-flow/vue"
-import "gantt-flow/style"
+import { GanttChart } from "@agions/gantt-flow/vue"
+import "@agions/gantt-flow/style"
 
 const ganttChart = ref(null)
 
