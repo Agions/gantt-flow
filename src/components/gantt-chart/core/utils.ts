@@ -25,10 +25,19 @@ export const DateUtils = {
    * 解析日期字符串为Date对象
    * @param dateStr 日期字符串或日期对象
    * @returns Date对象
+   * @throws {Error} 当日期无效时抛出错误
    */
   parseDate(dateStr: string | Date): Date {
-    if (!dateStr) return new Date();
-    if (dateStr instanceof Date) return dateStr;
+    if (!dateStr) {
+      throw new Error('Date string is required');
+    }
+
+    if (dateStr instanceof Date) {
+      if (isNaN(dateStr.getTime())) {
+        throw new Error('Invalid Date object provided');
+      }
+      return dateStr;
+    }
 
     // 尝试解析ISO格式的日期字符串
     const date = new Date(dateStr);
@@ -39,14 +48,29 @@ export const DateUtils = {
     // 尝试解析YYYY-MM-DD格式
     const parts = dateStr.split('-');
     if (parts.length === 3) {
-      return new Date(
-        parseInt(parts[0], 10),
-        parseInt(parts[1], 10) - 1,
-        parseInt(parts[2], 10)
-      );
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+
+      // 验证日期的有效性
+      if (year < 1900 || year > 2100) {
+        throw new Error(`Year must be between 1900 and 2100, got: ${year}`);
+      }
+      if (month < 0 || month > 11) {
+        throw new Error(`Month must be between 1 and 12, got: ${month + 1}`);
+      }
+      if (day < 1 || day > 31) {
+        throw new Error(`Day must be between 1 and 31, got: ${day}`);
+      }
+
+      const parsedDate = new Date(year, month, day);
+      if (isNaN(parsedDate.getTime())) {
+        throw new Error(`Invalid date string: ${dateStr}`);
+      }
+      return parsedDate;
     }
 
-    return new Date();
+    throw new Error(`Invalid date format: ${dateStr}. Expected format: YYYY-MM-DD or ISO date string`);
   },
 
   /**

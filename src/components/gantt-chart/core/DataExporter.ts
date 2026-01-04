@@ -107,7 +107,7 @@ export class DataExporter {
    */
   public async export(format: ExportFormat, options: ExportOptions = {}): Promise<void> {
     const mergedOptions = { ...this.defaultOptions, ...options };
-    
+
     switch (format) {
       case ExportFormat.CSV:
         this.exportAsCSV(mergedOptions);
@@ -129,19 +129,19 @@ export class DataExporter {
    */
   private exportAsCSV(options: ExportOptions): void {
     const { fileName, includeHeader, delimiter, exportTasks, exportDependencies, exportResources } = options;
-    
+
     // 导出任务
     if (exportTasks && this.tasks.length > 0) {
       const tasksCsv = this.generateCSV(this.tasks, 'tasks', options);
       this.downloadFile(`${fileName}-tasks.csv`, tasksCsv, 'text/csv');
     }
-    
+
     // 导出依赖关系
     if (exportDependencies && this.dependencies.length > 0) {
       const dependenciesCsv = this.generateCSV(this.dependencies, 'dependencies', options);
       this.downloadFile(`${fileName}-dependencies.csv`, dependenciesCsv, 'text/csv');
     }
-    
+
     // 导出资源
     if (exportResources && this.resources.length > 0) {
       const resourcesCsv = this.generateCSV(this.resources, 'resources', options);
@@ -156,24 +156,24 @@ export class DataExporter {
   private exportAsJSON(options: ExportOptions): void {
     const { fileName, prettyJSON, exportTasks, exportDependencies, exportResources } = options;
     const data: any = {};
-    
+
     if (exportTasks) {
       data.tasks = this.tasks;
     }
-    
+
     if (exportDependencies) {
       data.dependencies = this.dependencies;
     }
-    
+
     if (exportResources) {
       data.resources = this.resources;
     }
-    
+
     // 将数据转换为JSON字符串
     const jsonString = prettyJSON
       ? JSON.stringify(data, null, 2)
       : JSON.stringify(data);
-    
+
     // 下载JSON文件
     this.downloadFile(`${fileName}.json`, jsonString, 'application/json');
   }
@@ -184,36 +184,59 @@ export class DataExporter {
    */
   private async exportAsExcel(options: ExportOptions): Promise<void> {
     try {
-      // 尝试使用动态导入加载xlsx库
-      const XLSX = await import('xlsx');
-      
-      // 使用类型断言解决类型不匹配问题
-      const utils = XLSX.utils as any;
-      
-      const workbook = utils.book_new();
-      
+      // 使用 exceljs 替代 xlsx（修复安全漏洞）
+      const ExcelJS = await import('exceljs');
+      const workbook = new ExcelJS.Workbook();
+
       // 导出任务
       if (options.exportTasks && this.tasks.length > 0) {
-        const tasksSheet = utils.json_to_sheet(this.tasks);
-        utils.book_append_sheet(workbook, tasksSheet, '任务');
+        const tasksSheet = workbook.addWorksheet('任务');
+        if (this.tasks.length > 0) {
+          // 添加表头
+          const headers = Object.keys(this.tasks[0]);
+          tasksSheet.addRow(headers);
+          // 添加数据行
+          this.tasks.forEach(task => {
+            tasksSheet.addRow(headers.map(h => (task as any)[h]));
+          });
+        }
       }
-      
+
       // 导出依赖关系
       if (options.exportDependencies && this.dependencies.length > 0) {
-        const dependenciesSheet = utils.json_to_sheet(this.dependencies);
-        utils.book_append_sheet(workbook, dependenciesSheet, '依赖关系');
+        const dependenciesSheet = workbook.addWorksheet('依赖关系');
+        if (this.dependencies.length > 0) {
+          const headers = Object.keys(this.dependencies[0]);
+          dependenciesSheet.addRow(headers);
+          this.dependencies.forEach(dep => {
+            dependenciesSheet.addRow(headers.map(h => (dep as any)[h]));
+          });
+        }
       }
-      
+
       // 导出资源
       if (options.exportResources && this.resources.length > 0) {
-        const resourcesSheet = utils.json_to_sheet(this.resources);
-        utils.book_append_sheet(workbook, resourcesSheet, '资源');
+        const resourcesSheet = workbook.addWorksheet('资源');
+        if (this.resources.length > 0) {
+          const headers = Object.keys(this.resources[0]);
+          resourcesSheet.addRow(headers);
+          this.resources.forEach(res => {
+            resourcesSheet.addRow(headers.map(h => (res as any)[h]));
+          });
+        }
       }
-      
-      // 保存Excel文件
-      XLSX.writeFile(workbook, `${options.fileName}.xlsx`);
+
+      // 生成并下载Excel文件
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${options.fileName}.xlsx`;
+      link.click();
+      URL.revokeObjectURL(url);
     } catch (error) {
-      console.warn('使用xlsx库导出Excel失败，将数据导出为CSV。');
+      console.warn('使用exceljs库导出Excel失败，将数据导出为CSV。');
       this.exportAsCSV(options);
     }
   }
@@ -229,29 +252,29 @@ export class DataExporter {
     if (!data || data.length === 0) {
       return '';
     }
-    
+
     const { includeHeader, delimiter, fields, exportExtendedFields, dateFormat } = options;
     const rows: string[] = [];
-    
+
     // 获取所有字段
     let allFields = this.getFields(data, type);
-    
+
     // 如果指定了字段，则使用指定的字段
     if (fields && fields.length > 0) {
       allFields = allFields.filter(field => fields.includes(field));
     }
-    
+
     // 如果不导出扩展字段，则排除自定义字段
     if (!exportExtendedFields) {
       const standardFields = this.getStandardFields(type);
       allFields = allFields.filter(field => standardFields.includes(field));
     }
-    
+
     // 生成表头
     if (includeHeader) {
       rows.push(allFields.join(delimiter));
     }
-    
+
     // 生成数据行
     data.forEach(item => {
       const values = allFields.map(field => {
@@ -260,7 +283,7 @@ export class DataExporter {
       });
       rows.push(values.join(delimiter));
     });
-    
+
     return rows.join('\n');
   }
 
@@ -285,7 +308,7 @@ export class DataExporter {
     if (value === null || value === undefined) {
       return '';
     }
-    
+
     if (typeof value === 'string') {
       // 如果字符串包含分隔符或换行符，则用引号包裹
       if (value.includes(',') || value.includes('\n') || value.includes('"')) {
@@ -293,7 +316,7 @@ export class DataExporter {
       }
       return value;
     }
-    
+
     if (value instanceof Date) {
       // 格式化日期
       if (dateFormat) {
@@ -305,11 +328,11 @@ export class DataExporter {
       }
       return value.toISOString();
     }
-    
+
     if (typeof value === 'object') {
       return JSON.stringify(value);
     }
-    
+
     return String(value);
   }
 
@@ -321,10 +344,10 @@ export class DataExporter {
    */
   private getFields(data: any[], type: 'tasks' | 'dependencies' | 'resources'): string[] {
     const fields = new Set<string>();
-    
+
     // 添加标准字段
     this.getStandardFields(type).forEach(field => fields.add(field));
-    
+
     // 如果需要，扫描所有对象查找其他字段
     data.forEach(item => {
       Object.keys(item).forEach(key => {
@@ -338,7 +361,7 @@ export class DataExporter {
         }
       });
     });
-    
+
     return Array.from(fields);
   }
 

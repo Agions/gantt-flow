@@ -914,7 +914,7 @@ export const EnhancedGanttChart = React.forwardRef<
     getStateManager: () => stateManagerRef.current,
   }))
 
-  // 默认选项与用户选项合并
+  // 默认选项与用户选项合并 - 移到使用之前
   const defaultOptions = {
     allowTaskDrag: true,
     allowTaskResize: true,

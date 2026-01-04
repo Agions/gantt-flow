@@ -1,6 +1,7 @@
 /**
  * 核心工具函数测试
  */
+import { describe, test, expect, vi } from 'vitest';
 import { daysBetween, addDays, formatDate, parseDate, debounce, throttle } from './utils';
 
 describe('核心工具函数测试', () => {
@@ -58,7 +59,7 @@ describe('核心工具函数测试', () => {
 
   describe('其他工具函数', () => {
     test('debounce函数应该延迟执行', async () => {
-      const mockFn = jest.fn();
+      const mockFn = vi.fn();
       const debouncedFn = debounce(mockFn, 100);
 
       debouncedFn();
@@ -70,7 +71,7 @@ describe('核心工具函数测试', () => {
     });
 
     test('debounce函数应该取消之前的调用', async () => {
-      const mockFn = jest.fn();
+      const mockFn = vi.fn();
       const debouncedFn = debounce(mockFn, 100);
 
       debouncedFn();
@@ -81,7 +82,7 @@ describe('核心工具函数测试', () => {
     });
 
     test('throttle函数应该限制执行频率', async () => {
-      const mockFn = jest.fn();
+      const mockFn = vi.fn();
       const throttledFn = throttle(mockFn, 100);
 
       throttledFn();

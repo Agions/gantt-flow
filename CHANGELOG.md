@@ -5,6 +5,21 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 并且本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.1.4] - 2026-01-04
+
+### 修复
+
+- 修复 TaskManager.deleteTask 级联删除问题，删除父任务时正确删除所有子任务
+- 修复循环依赖检测测试用例，使用 setDependencies 绕过创建时的循环检测
+- 修复 package.json exports 配置，将 types 条件移到 import/require 之前
+- 修复 rollup.config.styles.js 构建警告，消除文件覆盖警告
+
+### 改进
+
+- 优化依赖结构，更新所有依赖到最新稳定版本
+- 修复所有安全漏洞（npm audit 报告 0 漏洞）
+- 所有 44 个测试用例通过
+
 ## [1.1.3] - 2025-12-17
 
 ### 新增

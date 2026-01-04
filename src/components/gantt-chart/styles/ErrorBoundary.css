@@ -1,0 +1,266 @@
+/* ErrorBoundary 样式 */
+
+.gantt-error-boundary {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 4px;
+}
+
+.gantt-error-content {
+  max-width: 500px;
+  text-align: center;
+  padding: 40px;
+  background-color: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.gantt-error-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #f5222d;
+  margin: 0 0 16px 0;
+}
+
+.gantt-error-message {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0 0 24px 0;
+}
+
+.gantt-error-details {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.gantt-error-details summary {
+  cursor: pointer;
+  color: #1890ff;
+  font-weight: 500;
+  padding: 8px 0;
+}
+
+.gantt-error-details summary:hover {
+  color: #40a9ff;
+}
+
+.gantt-error-stack {
+  background-color: #f5f5f5;
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+  padding: 12px;
+  margin-top: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.gantt-error-retry {
+  background-color: #1890ff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gantt-error-retry:hover {
+  background-color: #40a9ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.gantt-error-retry:active {
+  transform: translateY(1px);
+}
+
+/* 默认错误回退 UI */
+
+.gantt-error-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  min-width: 320px;
+}
+
+.gantt-error-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
+.gantt-error-heading {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+}
+
+.gantt-error-text {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0 0 32px 0;
+}
+
+.gantt-error-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.gantt-error-button {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gantt-error-button.primary {
+  background-color: #1890ff;
+  color: #fff;
+}
+
+.gantt-error-button.primary:hover {
+  background-color: #40a9ff;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+.gantt-error-button.secondary {
+  background-color: #fff;
+  color: #666;
+  border: 1px solid #d9d9d9;
+}
+
+.gantt-error-button.secondary:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.gantt-error-button:active {
+  transform: translateY(1px);
+}
+
+/* 响应式设计 */
+
+@media (max-width: 768px) {
+  .gantt-error-content {
+    padding: 24px;
+    margin: 0 16px;
+  }
+  
+  .gantt-error-title {
+    font-size: 20px;
+  }
+  
+  .gantt-error-fallback {
+    padding: 40px 24px;
+    min-width: auto;
+  }
+  
+  .gantt-error-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .gantt-error-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .gantt-error-icon {
+    font-size: 48px;
+  }
+  
+  .gantt-error-heading {
+    font-size: 18px;
+  }
+  
+  .gantt-error-text {
+    font-size: 13px;
+  }
+}
+
+/* 暗色主题支持 */
+
+@media (prefers-color-scheme: dark) {
+  .gantt-error-boundary {
+    background-color: #1f1f1f;
+  }
+  
+  .gantt-error-content {
+    background-color: #2a2a2a;
+    border-color: #404040;
+  }
+  
+  .gantt-error-title {
+    color: #ff7875;
+  }
+  
+  .gantt-error-message {
+    color: #b0b0b0;
+  }
+  
+  .gantt-error-stack {
+    background-color: #1f1f1f;
+    border-color: #404040;
+    color: #e0e0e0;
+  }
+  
+  .gantt-error-fallback {
+    background-color: #2a2a2a;
+  }
+  
+  .gantt-error-heading {
+    color: #e0e0e0;
+  }
+  
+  .gantt-error-text {
+    color: #b0b0b0;
+  }
+  
+  .gantt-error-button.secondary {
+    background-color: #2a2a2a;
+    color: #b0b0b0;
+    border-color: #404040;
+  }
+  
+  .gantt-error-button.secondary:hover {
+    border-color: #40a9ff;
+    color: #40a9ff;
+  }
+}

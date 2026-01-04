@@ -1,19 +1,20 @@
-import postcss from 'rollup-plugin-postcss';
-import autoprefixer from 'autoprefixer';
+import postcss from "rollup-plugin-postcss"
+import autoprefixer from "autoprefixer"
 
 export default [
   // 打包样式文件
   {
-    input: 'src/components/gantt-chart/styles/index.css',
+    input: "src/components/gantt-chart/styles/index.css",
     output: {
-      file: 'dist/style.css'
+      dir: "dist",
+      assetFileNames: "[name][extname]",
     },
     plugins: [
       postcss({
         plugins: [autoprefixer()],
-        extract: true,
-        minimize: true
-      })
-    ]
-  }
-]; 
+        extract: "style.css",
+        minimize: true,
+      }),
+    ],
+  },
+]

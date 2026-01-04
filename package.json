@@ -1,25 +1,25 @@
 {
   "name": "@agions/gantt-flow",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "GanttFlow - 一个功能强大、流畅的甘特图组件，同时支持React和Vue，可用于项目管理和任务进度展示",
   "main": "dist/react/index.js",
   "module": "dist/react/index.esm.js",
   "types": "dist/react/index.d.ts",
   "exports": {
     ".": {
-      "require": "./dist/react/index.js",
+      "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.esm.js",
-      "types": "./dist/react/index.d.ts"
+      "require": "./dist/react/index.js"
     },
     "./react": {
-      "require": "./dist/react/index.js",
+      "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.esm.js",
-      "types": "./dist/react/index.d.ts"
+      "require": "./dist/react/index.js"
     },
     "./vue": {
-      "require": "./dist/vue/index.js",
+      "types": "./dist/vue/index.d.ts",
       "import": "./dist/vue/index.esm.js",
-      "types": "./dist/vue/index.d.ts"
+      "require": "./dist/vue/index.js"
     },
     "./style": "./dist/style.css"
   },
@@ -30,17 +30,51 @@
     "LICENSE"
   ],
   "scripts": {
+    "dev": "vite",
+    "start": "vite",
     "build": "npm run build:react && npm run build:styles",
     "build:react": "rollup -c rollup.config.react.js --bundleConfigAsCjs",
     "build:vue": "rollup -c rollup.config.vue.js --bundleConfigAsCjs",
     "build:styles": "rollup -c rollup.config.styles.js --bundleConfigAsCjs",
+    "build:demo": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src --ext .ts,.tsx",
     "prepublishOnly": "npm run build",
-    "check-compat": "npx browserslist",
-    "start": "react-scripts start",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "predeploy": "react-scripts build",
+    "predeploy": "vite build",
     "deploy": "gh-pages -d build"
+  },
+  "keywords": [
+    "gantt",
+    "gantt-chart",
+    "gantt-flow",
+    "gantt-chart-react",
+    "gantt-chart-vue",
+    "project-management",
+    "typescript",
+    "react",
+    "vue",
+    "cross-framework",
+    "甘特图"
+  ],
+  "author": "agions",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Agions/gantt-flow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Agions/gantt-flow/issues"
+  },
+  "homepage": "https://agions.github.io/gantt-flow",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "browserslist": {
     "production": [
@@ -54,85 +88,57 @@
       "last 1 safari version"
     ]
   },
-  "keywords": [
-    "甘特图",
-    "gantt-chart",
-    "gantt",
-    "gantt-chart-react",
-    "gantt-chart-vue",
-    "gantt-flow",
-    "typescript",
-    "project-management",
-    "cross-framework"
-  ],
-  "author": "agions",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Agions/gantt-flow.git"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
-  },
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
     "vue": ">=3.0.0"
   },
-  "devDependencies": {
-    "@babel/compat-data": "^7.22.9",
-    "@babel/core": "^7.22.9",
-    "@babel/plugin-transform-runtime": "^7.22.9",
-    "@babel/preset-env": "^7.22.9",
-    "@babel/preset-react": "^7.22.5",
-    "@babel/preset-typescript": "^7.22.5",
-    "@rollup/plugin-babel": "^6.0.3",
-    "@rollup/plugin-commonjs": "^25.0.3",
-    "@rollup/plugin-node-resolve": "^15.1.0",
-    "@rollup/plugin-terser": "^0.4.3",
-    "@rollup/plugin-typescript": "^11.1.2",
-    "@types/jest": "^30.0.0",
-    "@types/lodash": "^4.17.16",
-    "@types/react": "^18.2.15",
-    "@types/react-dom": "^18.2.7",
-    "@types/xlsx": "^0.0.35",
-    "@vue/compiler-sfc": "^3.3.4",
-    "ajv": "^8.17.1",
-    "ajv-keywords": "^5.1.0",
-    "autoprefixer": "^10.4.14",
-    "browserslist": "^4.21.9",
-    "core-js": "^3.31.1",
-    "gh-pages": "^5.0.0",
-    "html-to-image": "^1.11.11",
-    "jspdf": "^2.5.2",
-    "postcss": "^8.4.26",
-    "rollup": "^3.26.3",
-    "rollup-plugin-dts": "^5.3.0",
-    "rollup-plugin-postcss": "^4.0.2",
-    "rollup-plugin-vue": "^6.0.0",
-    "tslib": "^2.6.0",
-    "typescript": "^4.9.5"
-  },
-  "engines": {
-    "node": ">=14.0.0"
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    }
   },
   "dependencies": {
-    "@babel/runtime": "^7.22.6",
+    "dompurify": "^3.2.4",
+    "exceljs": "^4.4.0",
     "html-to-image": "^1.11.11",
     "html2canvas": "^1.4.1",
-    "jspdf": "^2.5.2",
-    "react": ">=16.8.0",
-    "react-dom": ">=16.8.0",
-    "react-router-dom": "^7.3.0",
-    "react-scripts": "5.0.1",
-    "xlsx": "^0.18.5"
+    "jspdf": "^4.0.0",
+    "lodash": "^4.17.21"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "homepage": "https://agions.github.io/gantt-flow"
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/plugin-transform-runtime": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/preset-react": "^7.26.0",
+    "@babel/preset-typescript": "^7.26.0",
+    "@babel/runtime": "^7.26.0",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^25.0.8",
+    "@rollup/plugin-node-resolve": "^15.3.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/lodash": "^4.17.16",
+    "@types/node": "^22.15.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vue/compiler-sfc": "^3.5.26",
+    "autoprefixer": "^10.4.20",
+    "gh-pages": "^6.3.0",
+    "jsdom": "^25.0.1",
+    "postcss": "^8.5.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.11.0",
+    "rollup": "^3.29.5",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-vue": "^6.0.0",
+    "tslib": "^2.8.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vitest": "^3.0.4"
+  }
 }

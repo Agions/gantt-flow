@@ -24,6 +24,7 @@ import {
   debounce,
   throttle
 } from "./utils";
+import DOMPurify from 'dompurify';
 import createStateManager, { StateManager } from './StateManager';
 import createImageExporter, { ImageExporter } from './ImageExporter';
 import createDataExporter, { DataExporter } from './DataExporter';
@@ -214,14 +215,17 @@ export class GanttChartCore {
     this.taskManager.setTasks(this._tasks);
     this.taskManager.setDependencies(this._dependencies);
 
-    // 初始化导出工具
-    this.imageExporter = createImageExporter(this._element!);
+    // 初始化导出工具 - 添加元素存在性检查
+    if (!this._element) {
+      throw new Error('GanttChart element is required for initialization');
+    }
+    this.imageExporter = createImageExporter(this._element);
     this.dataExporter = createDataExporter(
       this._tasks,
       this._dependencies,
       options.resources || []
     );
-    this.printManager = createPrintManager(this._element!);
+    this.printManager = createPrintManager(this._element);
 
     // 初始化渲染
     this.render(this._element!);
@@ -408,10 +412,11 @@ export class GanttChartCore {
       const taskLabel = document.createElement("div")
       taskLabel.className = "gantt-task-label"
 
-      // 创建标签文本容器以支持溢出省略
+      // 创建标签文本容器以支持溢出省略 - 添加 XSS 防护
       const labelText = document.createElement("div")
       labelText.className = "gantt-task-label-text"
-      labelText.textContent = task.name
+      // 使用 DOMPurify 清理任务名称，防止 XSS 攻击
+      labelText.textContent = DOMPurify.sanitize(task.name, { ALLOWED_TAGS: [] })
       taskLabel.appendChild(labelText)
 
       taskRow.appendChild(taskLabel)
@@ -1103,10 +1108,11 @@ export class GanttChartCore {
         taskRow.style.width = "100%"
       }
 
-      // 任务标签
+      // 任务标签 - 添加 XSS 防护
       const taskLabel = document.createElement("div")
       taskLabel.className = "gantt-task-label"
-      taskLabel.textContent = task.name
+      // 使用 DOMPurify 清理任务名称，防止 XSS 攻击
+      taskLabel.textContent = DOMPurify.sanitize(task.name, { ALLOWED_TAGS: [] })
       taskRow.appendChild(taskLabel)
 
       // 任务条

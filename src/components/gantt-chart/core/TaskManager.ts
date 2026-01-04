@@ -212,24 +212,34 @@ export class TaskManager {
 
     const task = this.tasks[taskIndex];
 
-    // 删除子任务
-    if (task.children && task.children.length > 0) {
-      task.children.forEach(child => {
-        this.deleteTask(child.id);
-      });
-    }
+    // 收集所有需要删除的任务ID（包括所有后代）
+    // 使用 parentId 从 tasks 列表查找子任务，而非依赖 children 数组
+    const tasksToDelete = new Set<TaskId>();
 
-    // 删除相关依赖关系
+    const collectTasksToDelete = (id: TaskId) => {
+      tasksToDelete.add(id);
+      // 从 tasks 列表中查找所有 parentId 为当前 id 的任务
+      this.tasks
+        .filter(t => t.parentId === id)
+        .forEach(child => collectTasksToDelete(child.id));
+    };
+
+    collectTasksToDelete(taskId);
+
+    // 保存父任务ID用于后续更新
+    const parentId = task.parentId;
+
+    // 删除所有相关依赖关系
     this.dependencies = this.dependencies.filter(
-      dep => dep.fromId !== taskId && dep.toId !== taskId
+      d => !tasksToDelete.has(d.fromId) && !tasksToDelete.has(d.toId)
     );
 
-    // 从任务列表中删除
-    this.tasks.splice(taskIndex, 1);
+    // 从任务列表中删除所有任务
+    this.tasks = this.tasks.filter(t => !tasksToDelete.has(t.id));
 
-    // 更新父任务的子任务列表
-    if (task.parentId) {
-      this._updateParentTaskChildren(task.parentId);
+    // 更新父任务的子任务列表（如果父任务没有被删除）
+    if (parentId && !tasksToDelete.has(parentId)) {
+      this._updateParentTaskChildren(parentId);
     }
 
     return true;
@@ -355,11 +365,49 @@ export class TaskManager {
    * @returns 是否存在循环依赖
    */
   checkCircularDependencies(): boolean {
-    for (const dep of this.dependencies) {
-      if (this._checkCircularDependency(dep)) {
+    // 构建依赖图
+    const graph = new Map<TaskId, TaskId[]>();
+    this.dependencies.forEach(dep => {
+      if (!graph.has(dep.fromId)) {
+        graph.set(dep.fromId, []);
+      }
+      graph.get(dep.fromId)!.push(dep.toId);
+    });
+
+    // 使用DFS检测循环
+    const visited = new Set<TaskId>();
+    const recursionStack = new Set<TaskId>();
+
+    const hasCycle = (taskId: TaskId): boolean => {
+      if (recursionStack.has(taskId)) {
+        return true; // 检测到循环
+      }
+
+      if (visited.has(taskId)) {
+        return false; // 已访问过，无循环
+      }
+
+      visited.add(taskId);
+      recursionStack.add(taskId);
+
+      const dependencies = graph.get(taskId) || [];
+      for (const depId of dependencies) {
+        if (hasCycle(depId)) {
+          return true;
+        }
+      }
+
+      recursionStack.delete(taskId);
+      return false;
+    };
+
+    // 检查所有任务
+    for (const task of this.tasks) {
+      if (hasCycle(task.id)) {
         return true;
       }
     }
+
     return false;
   }
 
@@ -368,36 +416,12 @@ export class TaskManager {
    * @param dependency 依赖关系
    * @returns 是否导致循环依赖
    * @private
+   * @deprecated 使用 checkCircularDependencies 代替
    */
   private _checkCircularDependency(dependency: Dependency): boolean {
-    const visited = new Set<TaskId>();
-    const stack = new Set<TaskId>();
-
-    const hasCycle = (taskId: TaskId): boolean => {
-      if (!visited.has(taskId)) {
-        visited.add(taskId);
-        stack.add(taskId);
-
-        // 获取当前任务的所有依赖任务
-        const taskDependencies = this.dependencies
-          .filter(dep => dep.fromId === taskId)
-          .map(dep => dep.toId);
-
-        for (const depTaskId of taskDependencies) {
-          if (!visited.has(depTaskId) && hasCycle(depTaskId)) {
-            return true;
-          } else if (stack.has(depTaskId)) {
-            return true;
-          }
-        }
-      }
-      stack.delete(taskId);
-      return false;
-    };
-
-    return hasCycle(dependency.fromId);
+    // 这个方法已被 checkCircularDependencies 替代
+    return this.checkCircularDependencies();
   }
-
   /**
    * 生成唯一任务ID
    * @returns 唯一ID
@@ -456,16 +480,16 @@ export class TaskManager {
   /**
    * 获取任务的所有祖先任务
    * @param taskId 任务ID
-   * @returns 祖先任务列表
+   * @returns 祖先任务列表（从直接父任务到最远祖先）
    */
   getAncestorTasks(taskId: TaskId): Task[] {
     const ancestors: Task[] = [];
-    let currentTask = this.tasks.find(t => t.id === taskId);
+    let currentTask: Task | undefined = this.tasks.find(t => t.id === taskId);
 
     while (currentTask && currentTask.parentId) {
-      const parent = this.tasks.find(t => t.id === currentTask?.parentId);
+      const parent = this.tasks.find(t => t.id === currentTask!.parentId);
       if (parent) {
-        ancestors.unshift(parent);
+        ancestors.push(parent);
         currentTask = parent;
       } else {
         break;
